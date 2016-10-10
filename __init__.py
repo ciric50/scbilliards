@@ -1,12 +1,12 @@
 '''
-scbilliards add-on.
+Brunelleschi add-on.
 '''
 
 bl_info = {
     "name": "scbilliards",
     "author": "Willard Maier",
     "version": (0, 1),
-    "blender": (2, 7, 8),
+    "blender": (2, 7, 7),
     "location": "View3D > Add > Mesh > scbilliards",
     "description": "Loads billiard data",
     "warning": "",

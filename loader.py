@@ -5,6 +5,7 @@ import copy
 import logging
 import csv
 import operator
+import math
 
 import bpy
 from bpy.types import Operator
@@ -20,7 +21,12 @@ class BilliardParams():
     def __init__(self):
         self.initfile = None
         self.time_scale = 24.0
-        self.show_box = False
+        self.show_xlo = True
+        self.show_xhi = True
+        self.show_ylo = True
+        self.show_yhi = True
+        self.show_zlo = True
+        self.show_zhi = True
 
         self.np = 0   # Number of particles
         self.box_size = 4.0
@@ -56,12 +62,47 @@ def add_box(params):
 
     Arguments:
         params - BilliardParams object with parameters to use
-
-    Returns the corresponding frame number.
     '''
-    bpy.ops.mesh.primitive_cube_add()
-    ob = bpy.context.scene.objects.active
-    ob.scale = (params.box_size, params.box_size, params.box_size)
+    if params.show_xlo:
+        bpy.ops.mesh.primitive_plane_add()
+        ob = bpy.context.scene.objects.active
+        ob.rotation_mode = 'XYZ'
+        ob.rotation_euler = (0, 0.5*math.pi, 0)
+        ob.location = (-params.box_size, 0, 0)
+        ob.scale = (params.box_size, params.box_size, params.box_size)
+    if params.show_xhi:
+        bpy.ops.mesh.primitive_plane_add()
+        ob = bpy.context.scene.objects.active
+        ob.rotation_mode = 'XYZ'
+        ob.rotation_euler = (0, 0.5*math.pi, 0)
+        ob.location = (params.box_size, 0, 0)
+        ob.scale = (params.box_size, params.box_size, params.box_size)
+
+    if params.show_ylo:
+        bpy.ops.mesh.primitive_plane_add()
+        ob = bpy.context.scene.objects.active
+        ob.rotation_mode = 'XYZ'
+        ob.rotation_euler = (0.5*math.pi, 0, 0)
+        ob.location = (0, -params.box_size, 0)
+        ob.scale = (params.box_size, params.box_size, params.box_size)
+    if params.show_yhi:
+        bpy.ops.mesh.primitive_plane_add()
+        ob = bpy.context.scene.objects.active
+        ob.rotation_mode = 'XYZ'
+        ob.rotation_euler = (0.5*math.pi, 0, 0)
+        ob.location = (0, params.box_size, 0)
+        ob.scale = (params.box_size, params.box_size, params.box_size)
+
+    if params.show_zlo:
+        bpy.ops.mesh.primitive_plane_add()
+        ob = bpy.context.scene.objects.active
+        ob.location = (0, 0, -params.box_size)
+        ob.scale = (params.box_size, params.box_size, params.box_size)
+    if params.show_zhi:
+        bpy.ops.mesh.primitive_plane_add()
+        ob = bpy.context.scene.objects.active
+        ob.location = (0, 0, params.box_size)
+        ob.scale = (params.box_size, params.box_size, params.box_size)
 
 #-----------------------------------------------------------------------------
 
@@ -141,8 +182,7 @@ def load_billiard_data(params):
                 kf.interpolation = 'LINEAR'
 
     # Add the surrounding box
-    if params.show_box:
-        add_box(params)
+    add_box(params)
 
 #-----------------------------------------------------------------------------
 
@@ -164,7 +204,12 @@ class BilliardsOperator(bpy.types.Operator):
         default=24.0
     )
 
-    show_box = BoolProperty(name="Show box", default=False, description="Show the enclosing box?")
+    show_xlo = BoolProperty(name="Show box xlo", default=True, description="Show the xlo box face?")
+    show_xhi = BoolProperty(name="Show box xhi", default=False, description="Show the xhi box face?")
+    show_ylo = BoolProperty(name="Show box ylo", default=False, description="Show the ylo box face?")
+    show_yhi = BoolProperty(name="Show box yhi", default=True, description="Show the yhi box face?")
+    show_zlo = BoolProperty(name="Show box zlo", default=True, description="Show the zlo box face?")
+    show_zhi = BoolProperty(name="Show box zhi", default=False, description="Show the zhi box face?")
 
     def execute(self, context):
         # Set cycles render engine if not selected
@@ -176,7 +221,12 @@ class BilliardsOperator(bpy.types.Operator):
 
         params.initfile = self.initfile
         params.time_scale = self.time_scale
-        params.show_box = self.show_box
+        params.show_xlo = self.show_xlo
+        params.show_xhi = self.show_xhi
+        params.show_ylo = self.show_ylo
+        params.show_yhi = self.show_yhi
+        params.show_zlo = self.show_zlo
+        params.show_zhi = self.show_zhi
 
         load_billiard_data(params)
 
