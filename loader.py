@@ -35,10 +35,11 @@ class BilliardParams():
 #-----------------------------------------------------------------------------
 
 class Collision:
-    def __init__(self, index, t, xyz):
+    def __init__(self, index, t, xyz, angles):
         self.index = index
         self.t = t
         self.xyz = xyz
+        self.angles = angles
 
 #-----------------------------------------------------------------------------
 
@@ -66,6 +67,7 @@ def add_box(params):
     if params.show_xlo:
         bpy.ops.mesh.primitive_plane_add()
         ob = bpy.context.scene.objects.active
+        ob.name = 'wall-xlo'
         ob.rotation_mode = 'XYZ'
         ob.rotation_euler = (0, 0.5*math.pi, 0)
         ob.location = (-params.box_size, 0, 0)
@@ -73,6 +75,7 @@ def add_box(params):
     if params.show_xhi:
         bpy.ops.mesh.primitive_plane_add()
         ob = bpy.context.scene.objects.active
+        ob.name = 'wall-xhi'
         ob.rotation_mode = 'XYZ'
         ob.rotation_euler = (0, 0.5*math.pi, 0)
         ob.location = (params.box_size, 0, 0)
@@ -81,6 +84,7 @@ def add_box(params):
     if params.show_ylo:
         bpy.ops.mesh.primitive_plane_add()
         ob = bpy.context.scene.objects.active
+        ob.name = 'wall-ylo'
         ob.rotation_mode = 'XYZ'
         ob.rotation_euler = (0.5*math.pi, 0, 0)
         ob.location = (0, -params.box_size, 0)
@@ -88,6 +92,7 @@ def add_box(params):
     if params.show_yhi:
         bpy.ops.mesh.primitive_plane_add()
         ob = bpy.context.scene.objects.active
+        ob.name = 'wall-yhi'
         ob.rotation_mode = 'XYZ'
         ob.rotation_euler = (0.5*math.pi, 0, 0)
         ob.location = (0, params.box_size, 0)
@@ -96,11 +101,13 @@ def add_box(params):
     if params.show_zlo:
         bpy.ops.mesh.primitive_plane_add()
         ob = bpy.context.scene.objects.active
+        ob.name = 'wall-zlo'
         ob.location = (0, 0, -params.box_size)
         ob.scale = (params.box_size, params.box_size, params.box_size)
     if params.show_zhi:
         bpy.ops.mesh.primitive_plane_add()
         ob = bpy.context.scene.objects.active
+        ob.name = 'wall-zhi'
         ob.location = (0, 0, params.box_size)
         ob.scale = (params.box_size, params.box_size, params.box_size)
 
@@ -134,10 +141,11 @@ def load_billiard_data(params):
                 index = int(float(row[1]))
                 rspec[index] = float(row[2])
             elif row[0] == 'c':
-                t = float(row[1])
-                index = int(float(row[2]))
-                xyz = [float(row[3]), float(row[4]), float(row[5])]
-                coll = Collision(index, t, xyz)
+                t = float(row[3])
+                index = int(float(row[1]))
+                xyz = [float(row[4]), float(row[5]), float(row[6])]
+                angles = [float(row[7]), float(row[8]), float(row[9])]
+                coll = Collision(index, t, xyz, angles)
                 clist.append(coll)
 
     # Now we have the data from the file. Find the number
@@ -156,8 +164,10 @@ def load_billiard_data(params):
         #bpy.ops.mesh.primitive_ico_sphere_add()
         bpy.ops.mesh.primitive_uv_sphere_add()
         oblist.append(bpy.context.scene.objects.active)
-        oblist[-1].name = "sphere."+str(k).zfill(4)
-        for poly in oblist[-1].data.polygons:
+        ob = oblist[-1]
+        ob.name = "sphere."+str(k).zfill(4)
+        ob.rotation_mode = 'XYZ'
+        for poly in ob.data.polygons:
             poly.use_smooth = True
 
     # Set keyframes for each collision
@@ -168,12 +178,14 @@ def load_billiard_data(params):
 
         # Set the sphere location and size at this keyframe
         ob = oblist[coll.index]
+        ob.rotation_euler = tuple(coll.angles)
         ob.location = tuple(coll.xyz)
         r = radii[coll.index]
         ob.scale = (r,r,r)
 
-        # Insert the keyframe
+        # Insert the keyframes
         ob.keyframe_insert('location', frame=frame_num)
+        ob.keyframe_insert('rotation_euler', frame=frame_num)
 
     # Use linear interpolation between keyframes
     for ob in oblist:
